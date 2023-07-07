@@ -9,7 +9,7 @@
 
    Copyright (C) 1998 The Buici Company.
 
-   This program is free software; you can redistribute it and/or modify 
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
@@ -39,7 +39,6 @@
 #include "errno.h"
 #include "files.h"
 
-
 /* dup_status
 
    copies the status of one file to another.  This is meant to
@@ -51,19 +50,19 @@
 
 */
 
-bool dup_status (const char* szFileNew, const char* szFile)
+bool dup_status(const char *szFileNew, const char *szFile)
 {
   struct stat st;
-  if (::stat (szFile, &st))
+  if (::stat(szFile, &st))
     return false;
   struct utimbuf t;
   t.actime = st.st_atime;
   t.modtime = st.st_mtime;
-  if (utime (szFileNew, &t))
+  if (utime(szFileNew, &t))
     return false;
-  if (chown (szFileNew, st.st_uid, st.st_gid))
+  if (chown(szFileNew, st.st_uid, st.st_gid))
     return false;
-  if (chmod (szFileNew, st.st_mode))
+  if (chmod(szFileNew, st.st_mode))
     return false;
   return true;
 }
@@ -103,17 +102,19 @@ bool is_symlink (const char* szPath)
 }
 #endif
 
-char* path_of (const char* szPathOriginal)
+char *path_of(const char *szPathOriginal)
 {
-  char* sz = resolve_link (szPathOriginal);
-  if (!sz) {			// No link to resolve
-    sz = new char [strlen (szPathOriginal) + 3];
-    strcpy (sz, szPathOriginal);
+  char *sz = resolve_link(szPathOriginal);
+  if (!sz)
+  { // No link to resolve
+    sz = new char[strlen(szPathOriginal) + 3];
+    strcpy(sz, szPathOriginal);
   }
 
-  char* pch = rindex (sz, '/');
-  if (!pch) {
-    strcpy (sz, ".");
+  char *pch = rindex(sz, '/');
+  if (!pch)
+  {
+    strcpy(sz, ".");
     return sz;
   }
   *pch = 0;
@@ -121,45 +122,45 @@ char* path_of (const char* szPathOriginal)
   return sz;
 }
 
-
-char* resolve_link (const char* szPathOriginal)
+char *resolve_link(const char *szPathOriginal)
 {
-  if (!szPathOriginal || !*szPathOriginal 
-      || strlen (szPathOriginal) >= PATH_MAX)
+  if (!szPathOriginal || !*szPathOriginal || strlen(szPathOriginal) >= PATH_MAX)
     return NULL;
 
   static char szPath[PATH_MAX];
-  strcpy (szPath, szPathOriginal);
-  
+  strcpy(szPath, szPathOriginal);
+
   struct stat st;
-  
-				// Find where the link really points
-  do {
-    memset (&st, 0, sizeof (struct stat));
-    if (lstat (szPath, &st))
+
+  // Find where the link really points
+  do
+  {
+    memset(&st, 0, sizeof(struct stat));
+    if (lstat(szPath, &st))
       return NULL;
-    if (S_ISLNK (st.st_mode)) {
+    if (S_ISLNK(st.st_mode))
+    {
       static char sz[PATH_MAX + 1];
-      int cb = readlink (szPath, sz, sizeof (sz) - 1);
+      int cb = readlink(szPath, sz, sizeof(sz) - 1);
       if (cb == -1)
-	return NULL;
+        return NULL;
       sz[cb] = 0;
-      if (*sz == '/')		// Absolute path link
-	strcpy (szPath, sz);
-      else {			// Relative path link
-	if (strlen (szPath) + strlen (sz) >= PATH_MAX)
-	  return NULL;
-	char* pch = rindex (szPath, '/');
-	strcpy (pch ? (pch + 1) : szPath, sz);
+      if (*sz == '/') // Absolute path link
+        strcpy(szPath, sz);
+      else
+      { // Relative path link
+        if (strlen(szPath) + strlen(sz) >= PATH_MAX)
+          return NULL;
+        char *pch = rindex(szPath, '/');
+        strcpy(pch ? (pch + 1) : szPath, sz);
       }
     }
-  } while (S_ISLNK (st.st_mode));
+  } while (S_ISLNK(st.st_mode));
 
-  char* sz = new char[strlen (szPath) + 1];
-  strcpy (sz, szPath);
+  char *sz = new char[strlen(szPath) + 1];
+  strcpy(sz, szPath);
   return sz;
 }
-
 
 /* replace_file
 
@@ -172,15 +173,14 @@ char* resolve_link (const char* szPathOriginal)
 
 */
 
-bool replace_file (const char* szFileOutputOriginal, const char* szFile)
+bool replace_file(const char *szFileOutputOriginal, const char *szFile)
 {
-  char* szFileOutput = resolve_link (szFileOutputOriginal);
-  if (!szFileOutput)		// Link resolution error
+  char *szFileOutput = resolve_link(szFileOutputOriginal);
+  if (!szFileOutput) // Link resolution error
     return false;
 
-  int result = rename (szFile, szFileOutput); // One step replacement 
+  int result = rename(szFile, szFileOutput); // One step replacement
 
-  free (szFileOutput);
+  free(szFileOutput);
   return result == 0;
 }
-

@@ -31,65 +31,57 @@
 
 */
 
-  /* ----- Includes */
+/* ----- Includes */
 
 #include "standard.h"
 
+/* ----- Class Globals/Statics */
 
-  /* ----- Class Globals/Statics */
+bool g_fOppositeSex; // Host and current input file use
+                     // other byte ordering.
 
-bool g_fOppositeSex;		// Host and current input file use
-				// other byte ordering.
-
-  /* ----- Methods */
-unsigned64 _v (unsigned64 m)
+/* ----- Methods */
+unsigned64 _v(unsigned64 m)
 {
   if (!g_fOppositeSex)
     return m;
 
   /* TODO not implemented */
   return m;
-}  /* _v */
+} /* _v */
 
-unsigned32 _v (unsigned32 l)
+unsigned32 _v(unsigned32 l)
 {
   if (!g_fOppositeSex)
     return l;
-  return (  ((l & 0xff)     << 24)
-	  | ((l >> 24) & 0xff)
-	  | ((l & 0xff00)   << 8)
-	  | ((l & 0xff0000) >> 8));
-}  /* _v */
+  return (((l & 0xff) << 24) | ((l >> 24) & 0xff) | ((l & 0xff00) << 8) | ((l & 0xff0000) >> 8));
+} /* _v */
 
-unsigned16 _v (unsigned16 s)
+unsigned16 _v(unsigned16 s)
 {
   if (!g_fOppositeSex)
     return s;
   return ((s & 0xff) << 8) | ((s >> 8) & 0xff);
-}  /* _v */
+} /* _v */
 
-int64 _v (int64 m)
+int64 _v(int64 m)
 {
   if (!g_fOppositeSex)
     return m;
   /* TODO not implemented */
   return m;
-}  /* _v */
+} /* _v */
 
-int32 _v (int32 l)
+int32 _v(int32 l)
 {
   if (!g_fOppositeSex)
     return l;
-  return (  ((l & 0xff)     << 24)
-	  | ((l >> 24) & 0xff)
-	  | ((l & 0xff00)   << 8)
-	  | ((l & 0xff0000) >> 8));
-}  /* _v */
+  return (((l & 0xff) << 24) | ((l >> 24) & 0xff) | ((l & 0xff00) << 8) | ((l & 0xff0000) >> 8));
+} /* _v */
 
-int16 _v (int16 s)
+int16 _v(int16 s)
 {
   if (!g_fOppositeSex)
     return s;
   return ((s & 0xff) << 8) | ((s >> 8) & 0xff);
-}  /* _v */
-
+} /* _v */

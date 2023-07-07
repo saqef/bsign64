@@ -9,7 +9,7 @@
 
    Copyright (c) 1998 The Buici Company.
 
-   This program is free software; you can redistribute it and/or modify 
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 2 of the License, or
    (at your option) any later version.
@@ -27,13 +27,13 @@
    DESCRIPTION
    -----------
 
-   Interface for generating digital signature certificates.  
+   Interface for generating digital signature certificates.
 
    The first round uses gpg for generating signatures.
 
 */
 
-#define USE_BATCHMODE		// Silent operation of gpg
+#define USE_BATCHMODE // Silent operation of gpg
 
 #include "standard.h"
 #include "exec.h"
@@ -42,11 +42,11 @@
 #include "tty.h"
 
 extern int g_fDebug;
-extern const char* g_szApplication;
-extern const char* g_szPGOptions;
+extern const char *g_szApplication;
+extern const char *g_szPGOptions;
 extern int g_fVerbose;
 
-const char* fetch_passphrase (void);
+const char *fetch_passphrase(void);
 
 #define TEMPLATE_VERIFY "/tmp/bsignv-XXXXXX"
 char g_szPathTempVerify[] = TEMPLATE_VERIFY;
@@ -62,17 +62,17 @@ char g_szPathTempVerify[] = TEMPLATE_VERIFY;
 
 */
 
-void cleanup_temp_verify (bool fSignal)
+void cleanup_temp_verify(bool fSignal)
 {
-  if (g_szPathTempVerify[0]) {
-    int result = unlink (g_szPathTempVerify);
+  if (g_szPathTempVerify[0])
+  {
+    int result = unlink(g_szPathTempVerify);
     //    if (result == 0 && fSignal)
     //      fprintf (stderr, "unlinked temp %s\n", g_szPathTempVerify);
   }
   if (!fSignal)
     g_szPathTempVerify[0] = 0;
 }
-
 
 /* create_digital_signature
 
@@ -85,102 +85,98 @@ void cleanup_temp_verify (bool fSignal)
 
 */
 
-char* create_digital_signature (const char* pb, size_t cb)
+char *create_digital_signature(const char *pb, size_t cb)
 {
   //  if (g_fDebug)
   //    fprintf (stderr, "options: '%s'\n", g_szPGOptions);
 
-				// Create control streams
+  // Create control streams
   char rgbSignature[512];
-  char rgbErr[1024];		// *** FIXME: we need a ring buffer maybe?
-  const char* szPass = fetch_passphrase ();
+  char rgbErr[1024]; // *** FIXME: we need a ring buffer maybe?
+  const char *szPass = fetch_passphrase();
   if (!szPass)
     return NULL;
   ExStream exsIn, exsOut, exsPassPhrase, exsErr;
-  if (   !exsIn.for_stdin (pb, cb)
-      || !exsOut.for_stdout (rgbSignature, sizeof (rgbSignature))
-      || !exsPassPhrase.for_writing (szPass, strlen (szPass))
-      || !exsErr.for_stderr (rgbErr, sizeof (rgbErr))
-      )
+  if (!exsIn.for_stdin(pb, cb) || !exsOut.for_stdout(rgbSignature, sizeof(rgbSignature)) || !exsPassPhrase.for_writing(szPass, strlen(szPass)) || !exsErr.for_stderr(rgbErr, sizeof(rgbErr)))
     return NULL;
 
   char sz[256];
-  sprintf (sz, PG_PROGRAM " --no-greeting "
-#if defined (USE_BATCHMODE)
-	   "--batch "
+  sprintf(sz, PG_PROGRAM " --no-greeting "
+#if defined(USE_BATCHMODE)
+                         "--batch "
 #endif
-	   "-sb -o - --passphrase-fd %d %s", 
-	   exsPassPhrase.fd_write (), g_szPGOptions ? g_szPGOptions : "");
+                         "-sb -o - --passphrase-fd %d %s",
+          exsPassPhrase.fd_write(), g_szPGOptions ? g_szPGOptions : "");
 
-  ExStream* rgexs[] = { &exsIn, &exsOut, &exsPassPhrase, &exsErr };
-  int result = ExStream::exec (sz, rgexs, sizeof (rgexs)/sizeof (ExStream*));
+  ExStream *rgexs[] = {&exsIn, &exsOut, &exsPassPhrase, &exsErr};
+  int result = ExStream::exec(sz, rgexs, sizeof(rgexs) / sizeof(ExStream *));
 
-  if (result) {
+  if (result)
+  {
     if (g_fVerbose)
-      fprintf (stderr, "%s\n", rgbErr);
+      fprintf(stderr, "%s\n", rgbErr);
     return NULL;
   }
 
-  cb = exsOut.used ();
-  char* pbReturn = (char*) malloc (cb + 2);
+  cb = exsOut.used();
+  char *pbReturn = (char *)malloc(cb + 2);
   pbReturn[0] = ((cb >> 8) & 0xff);
   pbReturn[1] = (cb & 0xff);
-  memcpy (pbReturn + 2, rgbSignature, cb);
+  memcpy(pbReturn + 2, rgbSignature, cb);
 
   return pbReturn;
 }
 
-eExitStatus verify_digital_signature (const char* pbData, size_t cbData,
-				      const char* pbCert, size_t cbCert)
+eExitStatus verify_digital_signature(const char *pbData, size_t cbData,
+                                     const char *pbCert, size_t cbCert)
 {
-  if (cbCert == 0)		// Kind of a sanity check.  We also
-    return badsignature;	// verify this at the next layer up.
-				// This is here in case we call from
-				// some other place.
+  if (cbCert == 0)       // Kind of a sanity check.  We also
+    return badsignature; // verify this at the next layer up.
+                         // This is here in case we call from
+                         // some other place.
 
-				// Create control streams
+  // Create control streams
   char rgbErr[1024];
   ExStream exsIn, exsErr;
-  if (   !exsIn.for_stdin (pbCert, cbCert)
-      || !exsErr.for_stderr (rgbErr, sizeof (rgbErr)))
+  if (!exsIn.for_stdin(pbCert, cbCert) || !exsErr.for_stderr(rgbErr, sizeof(rgbErr)))
     return toomanyopenfiles;
 
 #if 1
-  strcpy (g_szPathTempVerify, TEMPLATE_VERIFY);
-  int fh = mkstemp (g_szPathTempVerify);
-				// *** FIXME, more error handling?
+  strcpy(g_szPathTempVerify, TEMPLATE_VERIFY);
+  int fh = mkstemp(g_szPathTempVerify);
+  // *** FIXME, more error handling?
   if (g_fDebug)
-    fprintf (stderr, "%s: creating temporary '%s' for data on verify\n", 
-	     g_szApplication, g_szPathTempVerify);
+    fprintf(stderr, "%s: creating temporary '%s' for data on verify\n",
+            g_szApplication, g_szPathTempVerify);
 
-  write (fh, pbData, cbData);
-  close (fh);
+  write(fh, pbData, cbData);
+  close(fh);
 #endif
 
   char sz[256];
-  sprintf (sz, PG_PROGRAM " --no-greeting "
-#if defined (USE_BATCHMODE)
-	   "--batch "
+  sprintf(sz, PG_PROGRAM " --no-greeting "
+#if defined(USE_BATCHMODE)
+                         "--batch "
 #endif
-	   "%s --verify - %s", 
-	   g_szPGOptions ? g_szPGOptions : "", g_szPathTempVerify);
-  ExStream* rgexs[] = { &exsIn, &exsErr };
-  int result = ExStream::exec (sz, rgexs, sizeof (rgexs)/sizeof (ExStream*));
+                         "%s --verify - %s",
+          g_szPGOptions ? g_szPGOptions : "", g_szPathTempVerify);
+  ExStream *rgexs[] = {&exsIn, &exsErr};
+  int result = ExStream::exec(sz, rgexs, sizeof(rgexs) / sizeof(ExStream *));
 
-  cleanup_temp_verify (false);
+  cleanup_temp_verify(false);
 
   if (result && g_fVerbose)
-    fprintf (stderr, "error result %d\n%s\n", result, rgbErr);
+    fprintf(stderr, "error result %d\n%s\n", result, rgbErr);
   if (!result)
     return noerror;
-  switch (result) {
+  switch (result)
+  {
   default:
     return badsignature;
   case 127:
     return programnotfound;
   }
 }
-
 
 /* fetch_passphrase
 
@@ -191,32 +187,32 @@ eExitStatus verify_digital_signature (const char* pbData, size_t cbData,
 
 */
 
-const char* fetch_passphrase (void)
+const char *fetch_passphrase(void)
 {
-  static char* g_szPassPhrase;
+  static char *g_szPassPhrase;
 
   if (g_szPassPhrase)
     return g_szPassPhrase;
 
-  g_szPassPhrase = (char*) malloc (512);
+  g_szPassPhrase = (char *)malloc(512);
 
-				// *** FIXME make this raw or
-				// something so we don't ECHO.  We do
-				// want to continue to input until we
-				// receive a newline, though.
+  // *** FIXME make this raw or
+  // something so we don't ECHO.  We do
+  // want to continue to input until we
+  // receive a newline, though.
 
-  int fh = open_user_tty ();
+  int fh = open_user_tty();
   if (fh == -1)
     return NULL;
 
-  disable_echo (fh);
+  disable_echo(fh);
   char szMessage[] = "\nEnter pass phrase: ";
-  write (fh, szMessage, strlen (szMessage));
+  write(fh, szMessage, strlen(szMessage));
   //  fflush (stdout);
-  size_t cb = read (fh, g_szPassPhrase, 511);
-  restore_echo (fh);
-  write (fh, "\n", 1);
-  close (fh);
+  size_t cb = read(fh, g_szPassPhrase, 511);
+  restore_echo(fh);
+  write(fh, "\n", 1);
+  close(fh);
   g_szPassPhrase[cb] = 0;
 
   return g_szPassPhrase;

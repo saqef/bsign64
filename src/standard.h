@@ -1,6 +1,6 @@
 /* standard.h							-*- C++ -*-
      $Id: standard.h,v 1.3 2002/01/18 01:06:46 elf Exp $
-   
+
    written by Oscar Levi
    21 November 1998
 
@@ -33,36 +33,34 @@
 
 */
 
-#if !defined (__STANDARD_H__)
-#    define   __STANDARD_H__
+#if !defined(__STANDARD_H__)
+#define __STANDARD_H__
 
 /* ----- Includes */
 
-//#include "build.h"		// Build parameters, always first
+// #include "build.h"		// Build parameters, always first
 
-# include "config.h"		// Autoconf configuration header
+#include "config.h" // Autoconf configuration header
 
-//#include "debug.h"		// Our local debug code
+// #include "debug.h"		// Our local debug code
 
-# include <unistd.h>
-# include <stdlib.h>
-# include <stdio.h>
-# include <fcntl.h>
-# include <memory.h>
-# include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <fcntl.h>
+#include <memory.h>
+#include <string.h>
 
 #include <ctype.h>
-#if defined (HAVE_MALLOC_H)
-# include <malloc.h>
+#if defined(HAVE_MALLOC_H)
+#include <malloc.h>
 #endif
 
-//#include "porting.h"
+// #include "porting.h"
 
-
-#if !defined (__CONSTVALUE)
-# define __CONSTVALUE __const
+#if !defined(__CONSTVALUE)
+#define __CONSTVALUE __const
 #endif
-
 
 // ----- Typedefs
 
@@ -82,10 +80,10 @@ typedef unsigned long unsigned32;
 
 #if SIZEOF_LONG == 8
 typedef signed long int64;
-typedef unsigned  long unsigned64;
+typedef unsigned long unsigned64;
 #elif SIZEOF_LONG_LONG == 8
 typedef signed long long int64;
 typedef unsigned long long unsigned64;
 #endif
 
-#endif  /* __STANDARD_H__ */
+#endif /* __STANDARD_H__ */

@@ -3,7 +3,7 @@
 
    written by Oscar Levi
    1 December 1996
-   
+
    This file is part of the project BSIGN.  See the file README for
    more information.
 
@@ -41,44 +41,42 @@
 
 */
 
-  /* ----- Includes */
+/* ----- Includes */
 
 #include "standard.h"
 #include "options.h"
 
+#define USE_PARTIALS // Permit partial matches for long options
 
-#define USE_PARTIALS		// Permit partial matches for long options
+/* ----- Class Globals/Statics */
 
-
-  /* ----- Class Globals/Statics */
-
-typedef enum {
-  STATE_0			= 0,
-  STATE_FOUND_DASH		= 1,
-  STATE_FOUND_DASHDASH		= 2,
+typedef enum
+{
+  STATE_0 = 0,
+  STATE_FOUND_DASH = 1,
+  STATE_FOUND_DASHDASH = 2,
 } STATE_PARSE;
 
-typedef enum {
-  FETCH_DEFAULT			= 0,
-  FETCH_SHORT			= 1,
-  FETCH_LONG			= 2,
-  FETCH_COMMAND			= 3,
+typedef enum
+{
+  FETCH_DEFAULT = 0,
+  FETCH_SHORT = 1,
+  FETCH_LONG = 2,
+  FETCH_COMMAND = 3,
 } FETCH_MODE;
 
+static int eval_option(char *pch, int cch, char *pchArgument,
+                       OPTION *pOptions);
+static OPTION *fetch_option(char *pch, FETCH_MODE mode, OPTION *rgOptions);
 
-static int eval_option (char* pch, int cch, char* pchArgument, 
-			OPTION* pOptions);
-static OPTION* fetch_option (char* pch, FETCH_MODE mode, OPTION* rgOptions);
+/* ----- Methods */
 
-
-  /* ----- Methods */
-
-char* parse_application (char* pch)
+char *parse_application(char *pch)
 {
-  char* pchSep    = rindex (pch, '\\');
-  char* pchSepAlt = rindex (pch, '/');
-  char* pchColon  = rindex (pch, ':');
-  char* pchDot    = rindex (pch, '.');
+  char *pchSep = rindex(pch, '\\');
+  char *pchSepAlt = rindex(pch, '/');
+  char *pchColon = rindex(pch, ':');
+  char *pchDot = rindex(pch, '.');
 
   if (pchSepAlt > pchSep)
     pchSep = pchSepAlt;
@@ -86,11 +84,10 @@ char* parse_application (char* pch)
     pchSep = pchColon;
   pch = pchSep ? pchSep + 1 : pch;
 
-  if (pchDot && strcasecmp (pch, ".exe"))
+  if (pchDot && strcasecmp(pch, ".exe"))
     *pchDot = 0;
   return pch;
-}  /* parse_applications */
-
+} /* parse_applications */
 
 /* parse_options
 
@@ -101,7 +98,7 @@ char* parse_application (char* pch)
 
 */
 
-int parse_options (int argc, char** argv, OPTION* rgOptions, int* pargc_used)
+int parse_options(int argc, char **argv, OPTION *rgOptions, int *pargc_used)
 {
   int argc_used;
   if (!pargc_used)
@@ -109,105 +106,118 @@ int parse_options (int argc, char** argv, OPTION* rgOptions, int* pargc_used)
 
   int result = 0;
 
-  for (; argc; --argc, ++argv, ++*pargc_used) {
-    char* pch;
+  for (; argc; --argc, ++argv, ++*pargc_used)
+  {
+    char *pch;
     int state = STATE_0;
-    for (pch = *argv; *pch; ++pch) {
-      OPTION* pOption;
-      char* pchArgument = NULL;
-      int cch;			// General purpose length storage
+    for (pch = *argv; *pch; ++pch)
+    {
+      OPTION *pOption;
+      char *pchArgument = NULL;
+      int cch; // General purpose length storage
 
-      switch (state) {
+      switch (state)
+      {
 
-	case STATE_0:
-	  if (*pch == '-') {
-	    state = STATE_FOUND_DASH;
-	    continue;
-	  }  /* if */
+      case STATE_0:
+        if (*pch == '-')
+        {
+          state = STATE_FOUND_DASH;
+          continue;
+        } /* if */
 
-	  if ((pOption = fetch_option (pch, FETCH_COMMAND, rgOptions))) {
-	    if ((result = eval_option (pch, strlen (pch), NULL, pOption)))
-	      return result;
-	  }  /* if */
-	  else if ((pOption = fetch_option (NULL, FETCH_DEFAULT, rgOptions))) {
-	    if ((result = eval_option (NULL, 0, pch, pOption)))
-	      return result;
-	  }  /* else-if */
-	  else
-	    return OPTION_ERR_OK;
-	  pch += strlen (pch) - 1;
-	  break;
+        if ((pOption = fetch_option(pch, FETCH_COMMAND, rgOptions)))
+        {
+          if ((result = eval_option(pch, strlen(pch), NULL, pOption)))
+            return result;
+        } /* if */
+        else if ((pOption = fetch_option(NULL, FETCH_DEFAULT, rgOptions)))
+        {
+          if ((result = eval_option(NULL, 0, pch, pOption)))
+            return result;
+        } /* else-if */
+        else
+          return OPTION_ERR_OK;
+        pch += strlen(pch) - 1;
+        break;
 
-	case STATE_FOUND_DASH:
-	  if (*pch == '-') {
-	    state = STATE_FOUND_DASHDASH;
-	    continue;
-	  }  /* if */
+      case STATE_FOUND_DASH:
+        if (*pch == '-')
+        {
+          state = STATE_FOUND_DASHDASH;
+          continue;
+        } /* if */
 
-	  pOption = fetch_option (pch, FETCH_SHORT, rgOptions);
-	  if (!pOption)
-	    return OPTION_ERR_UNRECOGNIZED;
+        pOption = fetch_option(pch, FETCH_SHORT, rgOptions);
+        if (!pOption)
+          return OPTION_ERR_UNRECOGNIZED;
 
-	  if (pOption->flags & OPTION_F_ARGUMENT) {
-	    if (*(pch + 1)) {
-	      pchArgument = pch + 1;
-	      if (*pchArgument == '=')
-		++pchArgument;
-	    }
-	    else if (argc > 1) {
-	      pchArgument = argv[1];
-	      --argc;
-	      ++argv;
-	      ++*pargc_used;
-	    }  /* else */
-	    else
-	      return OPTION_ERR_NOARGUMENT;
-	  }  /* if */
+        if (pOption->flags & OPTION_F_ARGUMENT)
+        {
+          if (*(pch + 1))
+          {
+            pchArgument = pch + 1;
+            if (*pchArgument == '=')
+              ++pchArgument;
+          }
+          else if (argc > 1)
+          {
+            pchArgument = argv[1];
+            --argc;
+            ++argv;
+            ++*pargc_used;
+          } /* else */
+          else
+            return OPTION_ERR_NOARGUMENT;
+        } /* if */
 
-	  if ((result = eval_option (pch, 1, pchArgument, pOption)))
-	    return result;
+        if ((result = eval_option(pch, 1, pchArgument, pOption)))
+          return result;
 
-	  if (pchArgument) {
-	    pch += strlen (pch) - 1;
-	    state = STATE_0;
-	  }  /* if */
-	  break;
+        if (pchArgument)
+        {
+          pch += strlen(pch) - 1;
+          state = STATE_0;
+        } /* if */
+        break;
 
-	case STATE_FOUND_DASHDASH:
-	  pOption = fetch_option (pch, FETCH_LONG, rgOptions);
-	  if (!pOption)
-	    return OPTION_ERR_UNRECOGNIZED;
+      case STATE_FOUND_DASHDASH:
+        pOption = fetch_option(pch, FETCH_LONG, rgOptions);
+        if (!pOption)
+          return OPTION_ERR_UNRECOGNIZED;
 
-	  cch = strlen (pch);
-	  if (pOption->flags & OPTION_F_ARGUMENT) {
-	    int cchOption = strcspn (pch, "=");
-	    if (pch[cchOption] == '=') {
-	      pchArgument = pch + cchOption + 1;
-	      cch = cchOption;
-	    }
-	    else if (argc > 1) {
-	      pchArgument = argv[1];
-	      --argc;
-	      ++argv;
-	      ++*pargc_used;
-	    }  /* else */
-	    else
-	      return OPTION_ERR_NOARGUMENT;
-	  }  /* if */
+        cch = strlen(pch);
+        if (pOption->flags & OPTION_F_ARGUMENT)
+        {
+          int cchOption = strcspn(pch, "=");
+          if (pch[cchOption] == '=')
+          {
+            pchArgument = pch + cchOption + 1;
+            cch = cchOption;
+          }
+          else if (argc > 1)
+          {
+            pchArgument = argv[1];
+            --argc;
+            ++argv;
+            ++*pargc_used;
+          } /* else */
+          else
+            return OPTION_ERR_NOARGUMENT;
+        } /* if */
 
-	  if ((result = eval_option (pch, cch, pchArgument, pOption)))
-	    return result;
+        if ((result = eval_option(pch, cch, pchArgument, pOption)))
+          return result;
 
-	  pch += strlen (pch) - 1;
+        pch += strlen(pch) - 1;
 
-	  state = STATE_0;
-	  break;
-      }  /* switch */
-    }  /* for */
-  }  /* for */
+        state = STATE_0;
+        break;
+      } /* switch */
+    }   /* for */
+  }     /* for */
   return OPTION_ERR_OK;
-}  /* parse_options */
-
+} /* parse_options */
 
 /* fetch_option
 
@@ -216,60 +226,60 @@ int parse_options (int argc, char** argv, OPTION* rgOptions, int* pargc_used)
    determines which types of options it can match.  It then tries to
    match that option string in the option data.  Long options and
    command options will match partials if the USE_PARTIALS macro is
-   defined. 
+   defined.
 
  */
 
-OPTION* fetch_option (char* pch, FETCH_MODE mode, OPTION* rgOptions)
+OPTION *fetch_option(char *pch, FETCH_MODE mode, OPTION *rgOptions)
 {
-  int cch = ((mode == FETCH_SHORT) ? 1 : (pch ? strlen (pch) : 0));
-  if (cch) {
-    int cchOption = strcspn (pch, "=");
+  int cch = ((mode == FETCH_SHORT) ? 1 : (pch ? strlen(pch) : 0));
+  if (cch)
+  {
+    int cchOption = strcspn(pch, "=");
     if (cchOption < cch)
       cch = cchOption;
   }
 
-  OPTION* pOptionDefault = NULL;
-  OPTION* pOptionPartial = NULL;
+  OPTION *pOptionDefault = NULL;
+  OPTION *pOptionPartial = NULL;
 
-  for (OPTION* pOption = rgOptions; pOption && pOption->sz; ++pOption) {
-    if (   mode == FETCH_DEFAULT
-	&& (pOption->flags & OPTION_F_DEFAULT)
-	&& !pOptionDefault)
+  for (OPTION *pOption = rgOptions; pOption && pOption->sz; ++pOption)
+  {
+    if (mode == FETCH_DEFAULT && (pOption->flags & OPTION_F_DEFAULT) && !pOptionDefault)
       pOptionDefault = pOption;
 
-    if (!pch) {
+    if (!pch)
+    {
       if (pOption->flags & OPTION_F_NONOPTION)
-	return pOption;
+        return pOption;
       continue;
-    }  /* if */
+    } /* if */
 
     if (*pOption->sz != *pch)
       continue;
 
-    if (   (mode == FETCH_COMMAND && !(pOption->flags & OPTION_F_COMMAND))
-	|| (mode != FETCH_COMMAND &&  (pOption->flags & OPTION_F_COMMAND)))
+    if ((mode == FETCH_COMMAND && !(pOption->flags & OPTION_F_COMMAND)) || (mode != FETCH_COMMAND && (pOption->flags & OPTION_F_COMMAND)))
       continue;
 
-    if (cch == 1 && mode != FETCH_COMMAND) {
+    if (cch == 1 && mode != FETCH_COMMAND)
+    {
       if (!pOption->sz[1])
-	return pOption;
+        return pOption;
       continue;
-    }  /* if */
-    if (strncmp (pch, pOption->sz, cch))
+    } /* if */
+    if (strncmp(pch, pOption->sz, cch))
       continue;
     if (!pOption->sz[cch])
       return pOption;
 #if defined USE_PARTIALS
-    pOptionPartial = pOptionPartial ? (OPTION*) -1 : pOption;
+    pOptionPartial = pOptionPartial ? (OPTION *)-1 : pOption;
 #endif
-  }  /* for */
+  } /* for */
 
-  return (pOptionPartial && pOptionPartial != (OPTION*) -1)
-      ? pOptionPartial
-      : pOptionDefault;
-}  /* fetch_option */
-
+  return (pOptionPartial && pOptionPartial != (OPTION *)-1)
+             ? pOptionPartial
+             : pOptionDefault;
+} /* fetch_option */
 
 /* eval_option
 
@@ -278,58 +288,64 @@ OPTION* fetch_option (char* pch, FETCH_MODE mode, OPTION* rgOptions)
 
  */
 
-int eval_option (char* pch, int cch, char* pchArgument, OPTION* pOption)
+int eval_option(char *pch, int cch, char *pchArgument, OPTION *pOption)
 {
-  if (pOption->pfn) {
+  if (pOption->pfn)
+  {
     char sz[2];
-    if (pOption->flags & OPTION_F_DEFAULT) {
-      if (cch == 1) {
-	sz[0] = *pch;
-	sz[1] = 0;
-	pchArgument = sz;
-      }  /* if */
+    if (pOption->flags & OPTION_F_DEFAULT)
+    {
+      if (cch == 1)
+      {
+        sz[0] = *pch;
+        sz[1] = 0;
+        pchArgument = sz;
+      } /* if */
       else
-	pchArgument = pch;
-    }  /* if */
-    return pOption->pfn (pOption, pchArgument)
-      ? OPTION_ERR_FAIL
-      : OPTION_ERR_OK;
-  }  /* if */
+        pchArgument = pch;
+    } /* if */
+    return pOption->pfn(pOption, pchArgument)
+               ? OPTION_ERR_FAIL
+               : OPTION_ERR_OK;
+  } /* if */
 
-  if (pOption->flags & OPTION_F_DEFAULT) {
-    printf ("Unrecognized option '%.*s'\n", cch, pch);
+  if (pOption->flags & OPTION_F_DEFAULT)
+  {
+    printf("Unrecognized option '%.*s'\n", cch, pch);
     return OPTION_ERR_UNRECOGNIZED;
   }
 
   if (pOption->flags & OPTION_F_NONOPTION)
     return OPTION_ERR_EXIT;
 
-  if ((pOption->flags & OPTION_F_SET_MASK) && pOption->pv) {
+  if ((pOption->flags & OPTION_F_SET_MASK) && pOption->pv)
+  {
     long value = 1;
     if (pchArgument && !(pOption->flags & OPTION_F_SET_STRING))
-      value = strtol (pchArgument, NULL, 0);
+      value = strtol(pchArgument, NULL, 0);
     else if (pOption->flags & OPTION_F_CLEAR)
       value = 0;
 
-    switch (pOption->flags & OPTION_F_SET_TYPE) {
-      default:
-	return OPTION_ERR_BADOPTION;
-      case OPTION_F_SET_INT:
-	*(int*)   pOption->pv = int   (value);
-	break;
-      case OPTION_F_SET_SHORT:
-	*(short*) pOption->pv = short (value);
-	break;
-      case OPTION_F_SET_LONG:
-	*(long*)  pOption->pv = long  (value);
-	break;
-      case OPTION_F_SET_STRING:
-	*(char**) pOption->pv = pchArgument;
-	break;
-    }  /* switch */
+    switch (pOption->flags & OPTION_F_SET_TYPE)
+    {
+    default:
+      return OPTION_ERR_BADOPTION;
+    case OPTION_F_SET_INT:
+      *(int *)pOption->pv = int(value);
+      break;
+    case OPTION_F_SET_SHORT:
+      *(short *)pOption->pv = short(value);
+      break;
+    case OPTION_F_SET_LONG:
+      *(long *)pOption->pv = long(value);
+      break;
+    case OPTION_F_SET_STRING:
+      *(char **)pOption->pv = pchArgument;
+      break;
+    } /* switch */
 
     return OPTION_ERR_OK;
-  }  /* if */
+  } /* if */
   else
     return OPTION_ERR_BADOPTION;
-}  /* eval_option */
+} /* eval_option */

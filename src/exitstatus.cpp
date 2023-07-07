@@ -18,23 +18,24 @@
 #include <stdarg.h>
 
 char g_szExitStatus[256];
-eExitStatus g_exitStatus;	// Return code for the program
+eExitStatus g_exitStatus; // Return code for the program
 
-void set_exitstatus (eExitStatus exitStatus, const char* sz, ...)
+void set_exitstatus(eExitStatus exitStatus, const char *sz, ...)
 {
   g_exitStatus = exitStatus;
 
-  if (sz) {
+  if (sz)
+  {
     va_list ap;
-    va_start (ap, sz);
-    vsnprintf (g_szExitStatus, sizeof (g_szExitStatus), sz, ap);
-    va_end (ap);
+    va_start(ap, sz);
+    vsnprintf(g_szExitStatus, sizeof(g_szExitStatus), sz, ap);
+    va_end(ap);
   }
   else
     g_szExitStatus[0] = 0;
 }
 
-void set_exitstatus_reported (void)
+void set_exitstatus_reported(void)
 {
   g_szExitStatus[0] = 0;
 }
