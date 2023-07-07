@@ -1,0 +1,3 @@
+/home/poi/Documents/bsign64/build/CMakeFiles/bsign.dir
+/home/poi/Documents/bsign64/build/CMakeFiles/edit_cache.dir
+/home/poi/Documents/bsign64/build/CMakeFiles/rebuild_cache.dir
