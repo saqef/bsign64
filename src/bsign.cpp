@@ -542,7 +542,11 @@ eExitStatus hash_elf (char* pb, size_t cb, int fhNew, bool fSign)
 
   if (rgbSignature) {
     lseek (fhNew, fixupSignature.ibNew, SEEK_SET);
-    write (fhNew, rgbSignature, CB_SIGNATURE);
+    if(-1 == write (fhNew, rgbSignature, CB_SIGNATURE))
+    {
+      delete rgbSignature;
+      return rewritefailed;
+    }
     delete rgbSignature;
     return noerror;
   }
@@ -774,11 +778,16 @@ size_t rewrite_elf64 (char* pb, size_t cb, int fh, FIXUP64& fixupSignature)
   if (fixupOldSignature.cb >= fixupSignature.cb) {
     void* pv = malloc (fixupOldSignature.cb);
     memset (pv, 0, fixupOldSignature.cb);
-    write (fh, pb, fixupOldSignature.ib);
-    write (fh, pv, fixupOldSignature.cb);
-    write (fh, pb + fixupOldSignature.ib + fixupOldSignature.cb,
-	   cb - fixupOldSignature.ib - fixupOldSignature.cb);
+    auto ret = write (fh, pb, fixupOldSignature.ib);
+    ret = write(fh, pv, fixupOldSignature.cb);
+    ret = write(fh, pb + fixupOldSignature.ib + fixupOldSignature.cb,
+                cb - fixupOldSignature.ib - fixupOldSignature.cb);
     free (pv);
+    if (-1 == ret)
+    {
+      return 0;
+    }
+
     fixupSignature = fixupOldSignature;
     fixupSignature.cbNew = fixupOldSignature.cb;
     return cb;
