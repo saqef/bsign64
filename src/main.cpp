@@ -52,24 +52,26 @@ int g_fSymbols;
 int g_fSections;
 int g_fDetail;
 
-int g_fSign;               // !0: hash & sign files
-int g_fHash;               // !0: hash files instead, 0: check signature
-bool g_fExpectSignature;   // !0: check for signature as well as hash
-bool g_fProcessedFile;     // Set when we do something
-bool g_fInverseResult;     // Negate result for benefit of find program
-int g_fNoSymLinks;         // Treat symlinks as invalid file format
-int g_fQuiet;              // Inhibit messages, return code only
-int g_fDebug;              // Show debug messages
-int g_fVerbose;            // Verbose reports
-int g_fIgnore;             // Ignore directories and non-ELF in error msgs
-int g_fHideGoodSigs;       // Hide files with good signatures from output
-int g_fSummary;            // Show processing summary at end
-int g_fForceResign;        // Resign files that are already signed
-const char *g_szOutput;    // Name of output file
-const char *g_szFileList;  // Name of file containing file list
-const char *g_szPGOptions; // Options to pass to privacy guard program
-FileWalk g_filewalk;       // Global file walking object
-char *g_szPathTempHash;    // Pointer to temporary filename for hashing
+int g_fSign;                // !0: hash & sign files
+int g_fHash;                // !0: hash files instead, 0: check signature
+bool g_fExpectSignature;    // !0: check for signature as well as hash
+bool g_fProcessedFile;      // Set when we do something
+bool g_fInverseResult;      // Negate result for benefit of find program
+int g_fNoSymLinks;          // Treat symlinks as invalid file format
+int g_fQuiet;               // Inhibit messages, return code only
+int g_fDebug;               // Show debug messages
+int g_fVerbose;             // Verbose reports
+int g_fIgnore;              // Ignore directories and non-ELF in error msgs
+int g_fHideGoodSigs;        // Hide files with good signatures from output
+int g_fSummary;             // Show processing summary at end
+int g_fForceResign;         // Resign files that are already signed
+const char *g_szOutput;     // Name of output file
+const char *g_szFileList;   // Name of file containing file list
+const char *g_szPGOptions;  // Options to pass to privacy guard program
+const char *g_szPassphraze; // Passphraze to GPG
+int g_notUsePassphraze;
+FileWalk g_filewalk;    // Global file walking object
+char *g_szPathTempHash; // Pointer to temporary filename for hashing
 
 int g_cFilesProcessed;    // Total files processed
 int g_cFilesSkipped;      // Number of files skipped because irrelevent
@@ -93,6 +95,7 @@ int do_unsigned(OPTION *, const char *);
 int do_verify(OPTION *, const char *);
 int do_include(OPTION *, const char *);
 int do_exclude(OPTION *, const char *);
+int do_disable_passphraze(OPTION *, const char *);
 
 void process_files(void); // the execution routine
 
@@ -154,6 +157,12 @@ OPTION rgOptions[] =
 
         {"version", 0, NULL, do_version},
         {"V", 0, NULL, do_version},
+
+        {"passphrase", OPTION_F_SET_STRING | OPTION_F_ARGUMENT, &g_szPassphraze},
+        {"p", OPTION_F_SET_STRING | OPTION_F_ARGUMENT, &g_szPassphraze},
+
+        {"no-passphrase", OPTION_F_SET_INT, &g_notUsePassphraze},
+        {"np", OPTION_F_SET_INT, &g_notUsePassphraze},
 
         {"", OPTION_F_NONOPTION, NULL, do_filename},
         {"", OPTION_F_DEFAULT, NULL, do_unrecognized},

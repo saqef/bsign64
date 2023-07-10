@@ -44,7 +44,7 @@ int ExStream::exec(const char *szCommand, ExStream **rgpexs, int cStream)
 {
   //  extern bool g_fDebug;
   //  if (g_fDebug)
-  //    fprintf (stderr, "execute: '%s'\n", szCommand);
+   fprintf (stdout, "execute: '%s'\n", szCommand);
 
 #if 0
   for (int i = 0; i < cStream; ++i) {

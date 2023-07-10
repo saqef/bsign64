@@ -40,10 +40,13 @@
 #include "ds.h"
 #include "exitstatus.h"
 #include "tty.h"
+#include <string>
 
 extern int g_fDebug;
 extern const char *g_szApplication;
 extern const char *g_szPGOptions;
+extern const char *g_szPassphraze;
+extern int g_notUsePassphraze;
 extern int g_fVerbose;
 
 const char *fetch_passphrase(void);
@@ -93,23 +96,42 @@ char *create_digital_signature(const char *pb, size_t cb)
   // Create control streams
   char rgbSignature[512];
   char rgbErr[1024]; // *** FIXME: we need a ring buffer maybe?
-  const char *szPass = fetch_passphrase();
+  const char *szPass = "";
+  if (!g_notUsePassphraze)
+  {
+    szPass = fetch_passphrase();
+  }
+  printf("%s", szPass);
+
   if (!szPass)
     return NULL;
   ExStream exsIn, exsOut, exsPassPhrase, exsErr;
   if (!exsIn.for_stdin(pb, cb) || !exsOut.for_stdout(rgbSignature, sizeof(rgbSignature)) || !exsPassPhrase.for_writing(szPass, strlen(szPass)) || !exsErr.for_stderr(rgbErr, sizeof(rgbErr)))
     return NULL;
 
-  char sz[256];
-  sprintf(sz, PG_PROGRAM " --no-greeting "
+  std::string sz;
+  sz += PG_PROGRAM;
+  sz += " --no-greeting ";
 #if defined(USE_BATCHMODE)
-                         "--batch "
+  sz += "--batch ";
 #endif
-                         "-sb -o - --passphrase-fd %d %s",
-          exsPassPhrase.fd_write(), g_szPGOptions ? g_szPGOptions : "");
+  sz += "-sb -o - ";
+  if (!g_notUsePassphraze)
+  {
+    sz += " --passphrase - fd " + std::to_string(exsPassPhrase.fd_write());
+  }
+  sz += g_szPGOptions ? g_szPGOptions : "";
+
+//   char sz[256];
+//   sprintf(sz, PG_PROGRAM " --no-greeting "
+// #if defined(USE_BATCHMODE)
+//                          "--batch "
+// #endif
+//                          "-sb -o - --passphrase-fd %d %s",
+//           exsPassPhrase.fd_write(), g_szPGOptions ? g_szPGOptions : "");
 
   ExStream *rgexs[] = {&exsIn, &exsOut, &exsPassPhrase, &exsErr};
-  int result = ExStream::exec(sz, rgexs, sizeof(rgexs) / sizeof(ExStream *));
+  int result = ExStream::exec(sz.c_str(), rgexs, sizeof(rgexs) / sizeof(ExStream *));
 
   if (result)
   {
