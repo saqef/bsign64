@@ -99,36 +99,55 @@ char *create_digital_signature(const char *pb, size_t cb)
   const char *szPass = "";
   if (!g_notUsePassphraze)
   {
-    szPass = fetch_passphrase();
+    if (nullptr != g_szPassphraze)
+    {
+      szPass = g_szPassphraze;
+    }
+    else
+    {
+      szPass = fetch_passphrase();
+    }
   }
-  printf("%s", szPass);
 
-  if (!szPass)
-    return NULL;
+  // printf("sz - %s\n", szPass);
+
   ExStream exsIn, exsOut, exsPassPhrase, exsErr;
   if (!exsIn.for_stdin(pb, cb) || !exsOut.for_stdout(rgbSignature, sizeof(rgbSignature)) || !exsPassPhrase.for_writing(szPass, strlen(szPass)) || !exsErr.for_stderr(rgbErr, sizeof(rgbErr)))
+  {
     return NULL;
+  }
+
+  const auto setPassPhrase = szPass != nullptr && szPass[0] != '\0' && !g_notUsePassphraze;
 
   std::string sz;
+  // if (setPassPhrase)
+  // {
+  //   sz += "echo ";
+  //   sz += szPass;
+  //   sz += " | ";
+  // }
+
   sz += PG_PROGRAM;
   sz += " --no-greeting ";
 #if defined(USE_BATCHMODE)
   sz += "--batch ";
 #endif
   sz += "-sb -o - ";
-  if (!g_notUsePassphraze)
+  if (setPassPhrase)
   {
-    sz += " --passphrase - fd " + std::to_string(exsPassPhrase.fd_write());
+    sz += "--pinentry-mode loopback --passphrase-fd " + std::to_string(exsPassPhrase.fd_write()) + " ";
   }
+
   sz += g_szPGOptions ? g_szPGOptions : "";
 
-//   char sz[256];
-//   sprintf(sz, PG_PROGRAM " --no-greeting "
-// #if defined(USE_BATCHMODE)
-//                          "--batch "
-// #endif
-//                          "-sb -o - --passphrase-fd %d %s",
-//           exsPassPhrase.fd_write(), g_szPGOptions ? g_szPGOptions : "");
+  // printf(sz.c_str());
+  //   char sz[256];
+  //   sprintf(sz, PG_PROGRAM " --no-greeting "
+  // #if defined(USE_BATCHMODE)
+  //                          "--batch "
+  // #endif
+  //                          "-sb -o - --passphrase-fd %d %s",
+  //           exsPassPhrase.fd_write(), g_szPGOptions ? g_szPGOptions : "");
 
   ExStream *rgexs[] = {&exsIn, &exsOut, &exsPassPhrase, &exsErr};
   int result = ExStream::exec(sz.c_str(), rgexs, sizeof(rgexs) / sizeof(ExStream *));

@@ -52,24 +52,24 @@ int g_fSymbols;
 int g_fSections;
 int g_fDetail;
 
-int g_fSign;                // !0: hash & sign files
-int g_fHash;                // !0: hash files instead, 0: check signature
-bool g_fExpectSignature;    // !0: check for signature as well as hash
-bool g_fProcessedFile;      // Set when we do something
-bool g_fInverseResult;      // Negate result for benefit of find program
-int g_fNoSymLinks;          // Treat symlinks as invalid file format
-int g_fQuiet;               // Inhibit messages, return code only
-int g_fDebug;               // Show debug messages
-int g_fVerbose;             // Verbose reports
-int g_fIgnore;              // Ignore directories and non-ELF in error msgs
-int g_fHideGoodSigs;        // Hide files with good signatures from output
-int g_fSummary;             // Show processing summary at end
-int g_fForceResign;         // Resign files that are already signed
-const char *g_szOutput;     // Name of output file
-const char *g_szFileList;   // Name of file containing file list
-const char *g_szPGOptions;  // Options to pass to privacy guard program
-const char *g_szPassphraze; // Passphraze to GPG
-int g_notUsePassphraze;
+int g_fSign;                          // !0: hash & sign files
+int g_fHash;                          // !0: hash files instead, 0: check signature
+bool g_fExpectSignature;              // !0: check for signature as well as hash
+bool g_fProcessedFile;                // Set when we do something
+bool g_fInverseResult;                // Negate result for benefit of find program
+int g_fNoSymLinks;                    // Treat symlinks as invalid file format
+int g_fQuiet;                         // Inhibit messages, return code only
+int g_fDebug;                         // Show debug messages
+int g_fVerbose;                       // Verbose reports
+int g_fIgnore;                        // Ignore directories and non-ELF in error msgs
+int g_fHideGoodSigs;                  // Hide files with good signatures from output
+int g_fSummary;                       // Show processing summary at end
+int g_fForceResign;                   // Resign files that are already signed
+const char *g_szOutput;               // Name of output file
+const char *g_szFileList;             // Name of file containing file list
+const char *g_szPGOptions;            // Options to pass to privacy guard program
+const char *g_szPassphraze = nullptr; // Passphraze to GPG
+int g_notUsePassphraze = 0;
 FileWalk g_filewalk;    // Global file walking object
 char *g_szPathTempHash; // Pointer to temporary filename for hashing
 
@@ -162,7 +162,7 @@ OPTION rgOptions[] =
         {"p", OPTION_F_SET_STRING | OPTION_F_ARGUMENT, &g_szPassphraze},
 
         {"no-passphrase", OPTION_F_SET_INT, &g_notUsePassphraze},
-        {"np", OPTION_F_SET_INT, &g_notUsePassphraze},
+        {"n", OPTION_F_SET_INT, &g_notUsePassphraze},
 
         {"", OPTION_F_NONOPTION, NULL, do_filename},
         {"", OPTION_F_DEFAULT, NULL, do_unrecognized},
@@ -360,7 +360,7 @@ void process_files(void)
 
     fh = open(pch, O_RDONLY);
 
-    printf("do_filename: '%s'\n", pch);
+    // printf("do_filename: '%s'\n", pch);
 
     if (fh == -1)
     {
@@ -378,7 +378,7 @@ void process_files(void)
       goto do_filename_done;
     }
 
-    fprintf(stderr, "fh %d\n", fh);
+    // fprintf(stderr, "fh %d\n", fh);
     if ((g_fSign | g_fHash) && (g_fNoSymLinks && S_ISLNK(stat.st_mode)))
     {
       set_exitstatus(unsupportedfiletype,
@@ -415,14 +415,14 @@ void process_files(void)
     if (g_fSign | g_fHash)
     {
       char *szPath = path_of(g_szOutput ? g_szOutput : pch);
-      printf("path_of '%s'\n", szPath);
+      // printf("path_of '%s'\n", szPath);
       char *szFileNew = new char[strlen(szPath) + 32];
       strcpy(szFileNew, szPath);
       strcat(szFileNew, "/bsign.XXXXXX");
       g_szPathTempHash = szFileNew; // Permit signal cleanup
       fhNew = mkstemp(szFileNew);
       delete szPath;
-      printf("fhNew %d\n", fhNew);
+      // printf("fhNew %d\n", fhNew);
       if (fhNew == -1)
       {
         szPath = path_of(g_szOutput ? g_szOutput : pch);
@@ -433,7 +433,7 @@ void process_files(void)
         ++g_cFilesInaccessible;
         goto do_filename_done;
       }
-      printf("opened '%s'\n", szFileNew);
+      // printf("opened '%s'\n", szFileNew);
     }
 
     if ((pbMap = (char *)mmap(NULL, cb, PROT_READ,
@@ -659,5 +659,10 @@ int main(int argc, char **argv)
     fprintf(stdout, "%s: %s\n", g_szApplication, g_szExitStatus);
 
   //  fprintf (stderr, "exit (%d)\n", g_exitStatus);
+  if (eExitStatus::noerror == g_exitStatus)
+  {
+    fprintf(stdout, "success\n");
+  }
+
   return g_exitStatus;
 } /* main */

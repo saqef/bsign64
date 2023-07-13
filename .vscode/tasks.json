@@ -1,21 +1,8 @@
 {
-  "configurations": [
-    {
-      "args": [
-        "--sign",
-        "test-exe",
-        "-P",
-        "\"-v -u B793A75A9A16259AB9D55352C388A4F6FD526364\"",
-        "--force-resign",
-        "-v",
-        "-np"
-      ]
-    }
-  ],
   "tasks": [
     {
-      "type": "cppbuild",
       "label": "C/C++: g++-11 build active file",
+      "type": "cppbuild",
       "command": "/usr/bin/g++-11",
       "args": [
         "-fdiagnostics-color=always",
