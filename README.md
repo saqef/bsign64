@@ -5,6 +5,8 @@ How to use.
 
 Configure with cmake and build it.
 
+Fill sign.sh with your data (in header)
+
 To sign:
 ./sign.sh file_for_signing 
 
